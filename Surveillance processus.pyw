@@ -40,7 +40,10 @@ SCAN_INTERVAL_MS = 900
 DISPLAY_INTERVAL_MS = 15_000
 WINDOWS_APP_ID = "obat.sentinelle.v1"
 DONATION_URL = "https://www.paypal.com/paypalme/creaprisme"
-NEVER_BLOCK = {"system", "registry", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe", "winlogon.exe"}
+NEVER_BLOCK = {
+    "system", "registry", "smss.exe", "csrss.exe", "wininit.exe", "services.exe", "lsass.exe", "winlogon.exe",
+    "powershell.exe", "powershell_ise.exe", "pwsh.exe", "git.exe",
+}
 
 
 def path_key(path):
@@ -91,7 +94,8 @@ class ProcessGuard:
     def load_policy(self):
         try:
             raw = json.loads(POLICY_FILE.read_text(encoding="utf-8"))
-            return {path_key(p) for p in raw if isinstance(p, str) and p}
+            paths = {path_key(p) for p in raw if isinstance(p, str) and p}
+            return {path for path in paths if Path(path).name.lower() not in NEVER_BLOCK}
         except (OSError, ValueError, TypeError):
             return set()
 
@@ -521,6 +525,13 @@ try {{
             self.firewall_action.configure(text="Configurer le pare-feu", state="disabled")
             return
         key, exe = item
+        is_protected = self.is_protected(None, Path(exe).name.lower(), exe)
+        if is_protected:
+            self.action.configure(text="Programme protégé", state="disabled")
+            firewall_label = "Retirer le blocage réseau" if key in self.network_blocked else "Réseau protégé"
+            firewall_state = "normal" if key in self.network_blocked else "disabled"
+            self.firewall_action.configure(text=firewall_label, state=firewall_state)
+            return
         if key in self.blocked:
             self.action.configure(text="Autoriser ce programme", state="normal")
         else:
@@ -533,6 +544,13 @@ try {{
         if not item:
             return
         key, exe = item
+        if self.is_protected(None, Path(exe).name.lower(), exe) and key not in self.network_blocked:
+            messagebox.showinfo(
+                "Programme protégé",
+                "Sentinelle conserve PowerShell et Git accessibles afin de ne pas casser les scripts, les outils de développement et sa propre gestion du pare-feu.",
+                parent=self.root,
+            )
+            return
         if key in self.network_blocked:
             try:
                 self.apply_firewall_rules(exe, False)
@@ -558,6 +576,13 @@ try {{
         if not item:
             return
         key, exe = item
+        if self.is_protected(None, Path(exe).name.lower(), exe):
+            messagebox.showinfo(
+                "Programme protégé",
+                "Sentinelle ne bloque pas PowerShell ni Git, car de nombreuses applications et fonctions système en dépendent.",
+                parent=self.root,
+            )
+            return
         is_blocking = key not in self.blocked
         if key in self.blocked:
             self.blocked.remove(key)

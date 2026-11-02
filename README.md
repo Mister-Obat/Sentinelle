@@ -8,6 +8,7 @@
 *   **Historique persistant** : les programmes détectés restent consultables après leur arrêt et après le redémarrage de l'application.
 *   **Filtres et recherche** : affichez tous les programmes, les programmes bloqués ou autorisés ; recherchez par nom et triez les colonnes.
 *   **Blocage réactif** : choisissez un programme à bloquer ou autoriser ; vos choix sont mémorisés entre les sessions.
+*   **Outils protégés** : PowerShell (`powershell.exe`, `powershell_ise.exe`, `pwsh.exe`) et Git (`git.exe`) restent autorisés pour ne pas casser les scripts, les outils de développement ou la gestion du pare-feu de Sentinelle.
 *   **Pare-feu Windows** : configurez séparément les règles entrantes et sortantes pour un exécutable, après confirmation administrateur.
 *   **Zone de notification** : fermer la fenêtre masque l'application sans interrompre la surveillance.
 *   **Démarrage automatique** : lancez Sentinelle avec Windows, sans fenêtre de terminal.
